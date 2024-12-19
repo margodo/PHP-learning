@@ -51,25 +51,30 @@ function extractFilmData($html) {
     return $filmData;
 }
 
-// Пример обработки HTML
-$html = file_get_contents('film_page.html'); // Чтение файла HTML
-$filmData = extractFilmData($html);
+$dir = "./films/";
+$films = scandir($dir);
+foreach($films as $film) {
+    if ($file == '.' || $file == '..') {
+        continue;
+    }
+    $html = file_get_contents($dir . $film);
+    $filmData = extractFilmData($html);
 
-// Вставка данных в таблицы базы данных
-try {
-    // Вставка данных о фильме
-    $stmt = $pdo->prepare("INSERT INTO films (title, release_date, duration, slogan, imdb_rating, kp_rating) 
-                           VALUES (:title, :release_date, :duration, :slogan, :imdb_rating, :kp_rating)");
-
-    $stmt->execute([
-        'title' => 'Название фильма', // Здесь подставьте название фильма
-        'release_date' => $filmData['release_date'],
-        'duration' => 165, // Замените на правильную продолжительность
-        'slogan' => $filmData['slogan'],
-        'imdb_rating' => $filmData['imdb_rating'],
-        'kp_rating' => $filmData['kp_rating']
-    ]);
-
+    // Вставка данных в таблицы базы данных
+    try {
+        // Вставка данных о фильме
+        $stmt = $pdo->prepare("INSERT INTO films (title, release_date, duration, slogan, imdb_rating, kp_rating) 
+                               VALUES (:title, :release_date, :duration, :slogan, :imdb_rating, :kp_rating)");
+    
+        $stmt->execute([
+            'title' => 'Название фильма', // Здесь подставьте название фильма
+            'release_date' => $filmData['release_date'],
+            'duration' => 165, // Замените на правильную продолжительность
+            'slogan' => $filmData['slogan'],
+            'imdb_rating' => $filmData['imdb_rating'],
+            'kp_rating' => $filmData['kp_rating']
+        ]);
+    
     // Получаем ID фильма
     $filmId = $pdo->lastInsertId();
 
@@ -86,6 +91,9 @@ try {
     } else {
         $countryId = $country['id'];
     }
+}
+
+
 
     // Связываем фильм с его страной
     $stmt = $pdo->prepare("INSERT INTO film_country (film_id, country_id) VALUES (:film_id, :country_id)");
