@@ -24,27 +24,27 @@ function extractFilmData($html) {
     $filmData = [];
 
     // Извлечение страны
-    if (preg_match('/<h2>Страна<\/h2>:.*?<a href="[^"]+">([^<]+)<\/a>/', $html, $matches)) {
+    if (preg_match('/<h2>Страна<\/h2>:.*?<a href="[^"]+">([^<]+)<\/a>/u', $html, $matches)) {
         $filmData['country'] = $matches[1];
     }
 
     // Извлечение IMDb рейтинга
-    if (preg_match('/<span class="b-post__info_rates imdb"><a href="[^"]+">IMDb<\/a>: <span class="bold">([^<]+)<\/span>/', $html, $matches)) {
+    if (preg_match('/IMDb<\/a>: <span class="bold">(\d+\.\d+)<\/span>/u', $html, $matches)) {
         $filmData['imdb_rating'] = $matches[1];
     }
 
     // Извлечение Кинопоиск рейтинга
-    if (preg_match('/<span class="b-post__info_rates kp"><a href="[^"]+">Кинопоиск<\/a>: <span class="bold">([^<]+)<\/span>/', $html, $matches)) {
+    if (preg_match('/Кинопоиск<\/a>: <span class="bold">(\d+\.\d+)<\/span>/u', $html, $matches)) {
         $filmData['kp_rating'] = $matches[1];
     }
 
     // Извлечение даты выхода
-    if (preg_match('/<h2>Дата выхода<\/h2>:</td> <td>(.*?)<\/td>/', $html, $matches)) {
+    if (preg_match('/<h2>Дата выхода<\/h2>:<\/td> <td>(.*?)<\/td>/u', $html, $matches)) {
         $filmData['release_date'] = $matches[1];
     }
 
     // Извлечение слогана
-    if (preg_match('/<h2>Слоган<\/h2>:</td> <td>(.*?)<\/td>/', $html, $matches)) {
+    if (preg_match('/<h2>Слоган<\/h2>:<\/td> <td>(.*?)<\/td>/', $html, $matches)) {
         $filmData['slogan'] = $matches[1];
     }
 
@@ -54,25 +54,24 @@ function extractFilmData($html) {
 $dir = "./films/";
 $films = scandir($dir);
 foreach($films as $film) {
-    if ($file == '.' || $file == '..') {
+    if ($film == '.' || $film == '..') {
         continue;
     }
     $html = file_get_contents($dir . $film);
     $filmData = extractFilmData($html);
-
+    print_r($filmData);
     // Вставка данных в таблицы базы данных
     try {
         // Вставка данных о фильме
-        $stmt = $pdo->prepare("INSERT INTO films (title, release_date, duration, slogan, imdb_rating, kp_rating) 
-                               VALUES (:title, :release_date, :duration, :slogan, :imdb_rating, :kp_rating)");
+        $stmt = $pdo->prepare("INSERT INTO films (country, imdb_rating, kp_rating, release_date, duration, slogan) 
+                               VALUES (:country, :imdb_rating, :kp_rating, :release_date, :duration, :slogan)");
     
         $stmt->execute([
-            'title' => 'Название фильма', // Здесь подставьте название фильма
             'release_date' => $filmData['release_date'],
-            'duration' => 165, // Замените на правильную продолжительность
-            'slogan' => $filmData['slogan'],
             'imdb_rating' => $filmData['imdb_rating'],
-            'kp_rating' => $filmData['kp_rating']
+            'kp_rating' => $filmData['kp_rating'],
+            'duration' => 165, // Замените на правильную продолжительность
+            'slogan' => $filmData['slogan']
         ]);
     
     // Получаем ID фильма
