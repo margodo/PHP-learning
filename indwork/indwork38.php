@@ -39,12 +39,12 @@ function extractFilmData($html) {
     }
 
     // Извлечение даты выхода
-    if (preg_match('/<h2>Дата выхода<\/h2>:<\/td> <td>(.*?)<\/td>/u', $html, $matches)) {
+    if (preg_match('/<a href="year\/\d{4}\/">(\d{4}) года<\/a>/u', $html, $matches)) {
         $filmData['release_date'] = $matches[1];
     }
 
     // Извлечение слогана
-    if (preg_match('/<h2>Слоган<\/h2>:<\/td> <td>(.*?)<\/td>/', $html, $matches)) {
+    if (preg_match('/<h2>Слоган<\/h2>:<\/td> <td>&laquo;(.*?)&raquo;<\/td>/u', $html, $matches)) {
         $filmData['slogan'] = $matches[1];
     }
 
@@ -79,21 +79,18 @@ foreach($films as $film) {
 
     // Вставка страны в таблицу countries, если она еще не существует
     $stmt = $pdo->prepare("SELECT id FROM countries WHERE name = :name");
-    $stmt->execute(['name' => $filmData['country']]);
+    $stmt->execute(['country' => $filmData['country']]);
     $country = $stmt->fetch();
 
     if (!$country) {
         // Если страна не найдена, вставляем ее в таблицу
-        $stmt = $pdo->prepare("INSERT INTO countries (name) VALUES (:name)");
-        $stmt->execute(['name' => $filmData['country']]);
+        $stmt = $pdo->prepare("INSERT INTO countries (country) VALUES (:country)");
+        $stmt->execute(['country' => $filmData['country']]);
         $countryId = $pdo->lastInsertId();
     } else {
         $countryId = $country['id'];
     }
 }
-
-
-
     // Связываем фильм с его страной
     $stmt = $pdo->prepare("INSERT INTO film_country (film_id, country_id) VALUES (:film_id, :country_id)");
     $stmt->execute([
